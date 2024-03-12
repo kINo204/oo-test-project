@@ -23,7 +23,7 @@ while true:
     fin = open("in.txt", "w")
     fin.write(generated)
     fin.close()
-    execute = "jar < in.txt > out.txt -jar test.jar"
+    execute = "java < in.txt > out.txt -jar test.jar"
     os.system(execute)
     fout = open("out.txt", "r")
     jar_out = fout.readline();
@@ -34,26 +34,29 @@ while true:
     num = 0
     defs = []
     expression = ""
-    num = generated.split("\n")[0]
+    num = int(generated.split("\n")[0])
     for i in range(1,num+1):
         defs.append(generated.split("\n")[i])
     expression = generated.split("\n")[num+1]
 
     # Format function defs and define them.
     for i in range(0,num):
-        defs[i] = sub("^", "**", defs[i])
+        defs[i] = sub(r"(?<=[,=+\-*(^])\s*0+\s*(?=\d)|^\s*0+\s*(?=\d)", "", defs[i])
+        defs[i] = sub(r"\^\s*\+", "**", defs[i])
+        defs[i] = sub(r"\^", "**", defs[i])
         defs[i] = sub("=", " :return ", defs[i])
         defs[i] = "def " + defs[i];
         exec(defs[i])
 
     # Sub expression for sympy to use. 
     subed = ""
-    subed = sub(r"(?<=[\+\-\*\(\^])\s*0+\s*(?=\d)|^\s*0+\s*(?=\d)", "", expression)
+    subed = sub(r"(?<=[,=+\-*(^])\s*0+\s*(?=\d)|^\s*0+\s*(?=\d)", "", expression)
     subed = sub(r"\^\s*\+", "**", subed)
+    subed = sub(r"\^", "**", subed)
     print("subed: "+subed,end="")
 
     # Sympy calculates the answer.
-    exec("val=" + subed)
+    exec("val=expand(" + subed+")")
     ans = val.simplify().expand()
     print("ans: "+str(ans))
 

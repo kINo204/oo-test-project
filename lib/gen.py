@@ -1,23 +1,31 @@
 from lib.config import *
 from random import *
 # DEBUG
-'''
+"""
 configuration for release: 1, 0, 1
-'''
+"""
 GEN_OPTIONAL_OPT = 1 # whether the generator generates optional operators
 SHOW_CALLER = 0
-USE_INDENT_BLANK = 1
+USE_INDENT_BLANK = 0
 
-'''
+"""
 Grammar:
+func_def -> fun_name blank ( blank fun_param blank [, blank fun_param blank]{2} ) blank = blank expr
+func_call -> fun_name blank ( blank fact blank [, blank fact blank]{2} )
+fun_name -> f|g|h
+fun_param -> x|y|z
+
 expr -> blank [+-t blank] term blank {+- blank term blank}
 term -> [+-f blank] fact {blank * blank fact}
 fact -> 
     [+-b] int|
-    x index
-    '('expr')' index
-index -> [blank ^ blank [+] int]
-'''
+    x index|
+    (expr) index
+    "exp" blank ( blank factor blank ) index
+    func_call
+
+index -> [blank ^ blank [+] int]  (not same as required)
+"""
 
 class Generator:
     __string=""
@@ -27,55 +35,62 @@ class Generator:
     __para_name=[]
 
     def __init__(self):  
-        self.__rst()
+        self.__gen_attributes()
 
     def generate(self):
         self.__gen_attributes()
-        self.__gen_expr(0)
+        self.__gen_fundef()
+        self.__gen_expr(brac=0,allow_func=1)
         return self.__string
 
+
     def __gen_attributes(self):
-        self.__string = ""
+        self.__string = "" # init __string
         self.__fun_num = randint(0, 3)
         self.__para_num = randint(1, 3)
-        self.__fun_name = ['f', 'g', 'h']
-        random.shuffle(self.__fun_name)
-        self.__para_name = ['x', 'y', 'z']
-        random.shuffle(self.__para_name)
+        self.__fun_name = ["f", "g", "h"]
+        shuffle(self.__fun_name)
+        self.__para_name = ["x", "y", "z"]
+        shuffle(self.__para_name)
+
 
     def __gen_fundef(self):
+        # def -> fun_name blank ( blank fun_param blank [, blank fun_param blank]{2} ) blank = blank expr
+
         # Function num
         print(self.__fun_num)
-        self.__string += self.__fun_num
+        self.__string += str(self.__fun_num)
         self.__string += "\n"
-        # Function defs
+        # Function all func defs
         for i in range(0,self.__fun_num):
             print(self.__fun_name[i],end="")
             self.__string += self.__fun_name[i]
             self.__gen_blank()
-            print('(',end="")
+            print("(",end="")
             self.__string += "("
             self.__gen_blank()
             print(self.__para_name[0],end="")
             self.__string += self.__para_name[0]
             self.__gen_blank()
             for i in range(1,self.__para_num):
-                print(',',end="")
+                print(",",end="")
                 self.__string += ","
                 self.__gen_blank()
                 print(self.__para_name[i],end="")
                 self.__string += self.__para_name[i]
                 self.__gen_blank()
-            print(')',end="")
+            print(")",end="")
             self.__string += ")"
             self.__gen_blank()
-            print('=',end="")
+            print("=",end="")
             self.__string += "="
             self.__gen_blank()
-            self.__gen_expr() # ban func generating in this gen_expr
+            self.__gen_expr(max_brac-fun_def_brac,allow_func=0) # Reduce max brace num to limit complexity.
             print("")
-        
-    def __gen_expr(self,brac):
+            self.__string += "\n"
+    
+
+    def __gen_expr(self,brac,allow_func):
         # expr -> blank [+-t blank] term blank {+- blank term blank}
         if SHOW_CALLER:
             print("\nexpr: ")
@@ -84,48 +99,54 @@ class Generator:
         if randint(0,GEN_OPTIONAL_OPT) == 1:
             self.__gen_opt()
             self.__gen_blank()
-        self.__gen_term(brac)
+        self.__gen_term(brac,allow_func)
         self.__gen_blank()
         num_term = randrange(max_term) # num_term + 1 = total num of terms
         for i in range(0,num_term):
             self.__gen_opt()
             self.__gen_blank()
-            self.__gen_term(brac)
+            self.__gen_term(brac,allow_func)
             self.__gen_blank()
 
         if SHOW_CALLER:
             print("\n:exprE")
 
-    def __gen_func(self):
-        # Choose which function to generate.
-        index = randint(0,self.__fun_num - 1)
-        print(self.__fun_name[index],end="")
-        self.__string += self.__fun_name[index]
+
+    def __gen_func(self,brac):
+        # call -> fun_name blank ( blank fact blank [, blank fact blank]{2} )
+
+        # Choose a function available for generation.
+        if self.__fun_num == 0:
+            return
+        func_ind = randint(0,self.__fun_num-1)
+        fun_name = self.__fun_name[func_ind]
+        print(fun_name,end="")
+        self.__string += fun_name
         self.__gen_blank()
-        print('(',end="")
+        print("(",end="")
         self.__string += "("
-        # The function's generating behavior
+        # The function"s generating behavior
         # is configurable between expr / fact.
         if use_expr_func:
-            self.__gen_expr() # TODO: BRACE
+            self.__gen_expr(brac+1,allow_func=1)
         else:
-            self.__gen_fact() # TODO: BRACE
+            self.__gen_fact(brac+1,allow_func=1)
         self.__gen_blank()
-        for i in range(0,self.__para_num):
-            print(',',end="")
+        for i in range(0,self.__para_num-1):
+            print(",",end="")
             self.__string += ","
             self.__gen_blank()
             if use_expr_func:
-                self.__gen_expr()
+                self.__gen_expr(brac+1,allow_func=1)
             else:
-                self.__gen_fact()
+                self.__gen_fact(brac+1,allow_func=1)
             self.__gen_blank()
-        print(')',end="")
+        print(")",end="")
         self.__string += ")"
         self.__gen_blank()
 
 
-    def __gen_term(self,brac):
+    def __gen_term(self,brac,allow_func):
         # term -> [+-f blank] fact {blank * blank fact}
         if SHOW_CALLER:
             print("\nterm: ")
@@ -133,46 +154,52 @@ class Generator:
         if randint(0,GEN_OPTIONAL_OPT) == 1:
             self.__gen_opt()
             self.__gen_blank()
-        self.__gen_fact(brac)
+        self.__gen_fact(brac,allow_func)
         num_fact = randrange(max_fact)
         for i in range(0,num_fact):
             self.__gen_blank()
             print("*", end="")
             self.__string += "*"
             self.__gen_blank()
-            self.__gen_fact(brac)
+            self.__gen_fact(brac,allow_func)
 
         if SHOW_CALLER:
             print("\n:termE")
 
 
-    def __gen_fact(self,brac):
-        '''
+    def __gen_fact(self,brac,allow_func):
+        """
         fact -> 
             [+-b] int|
-            x index
-            '('expr')' index
-        '''
+            x index|
+            (expr) index
+            "exp" blank ( blank factor blank ) index
+            func_call
+        """
         if SHOW_CALLER:
             print("\nfactS: ")
 
         can_gen_expr = 1 if brac < max_brac else 0
 
+
+        use_func = allow_func & self.__fun_num != 0
         kind = 0
         if can_gen_expr:
             will_gen_brac = randint(0,1)
             if will_gen_brac:
-                kind = randint(0,3)
+                kind = randint(1-use_func,4)
             else:
-                kind = randint(2,3)
+                kind = randint(3,4)
         else:
-            kind = randint(2,3)
+            kind = randint(3,4)
         
         match kind:
-            case 0: # (expr) [blank ^ blank [+] int]
+            case 0: # func_call
+                self.__gen_func(brac+1)
+            case 1: # (expr) [blank ^ blank [+] int]
                 print("(", end="")
                 self.__string += "("
-                self.__gen_expr(brac+1)
+                self.__gen_expr(brac+1,allow_func)
                 print(")", end="")
                 self.__string += ")"
                 self.__gen_index(
@@ -180,14 +207,17 @@ class Generator:
                     if max_brac-brac < max_index \
                     else max_index
                     )
-            case 1: # 'exp' blank ( blank factor blank ) index
+            case 2: # "exp" blank ( blank factor blank ) index
                 print("exp", end="")
                 self.__string += "exp"
                 self.__gen_blank()
                 print("(", end="")
                 self.__string += "("
                 self.__gen_blank()
-                self.__gen_fact(brac+1)
+                if use_expr_func:
+                    self.__gen_expr(brac+1,allow_func)
+                else:
+                    self.__gen_fact(brac+1,allow_func)
                 self.__gen_blank()
                 print(")", end="")
                 self.__string += ")"
@@ -196,11 +226,11 @@ class Generator:
                     if max_brac-brac < max_index \
                     else max_index
                     )
-            case 2: # [+-b] int(int >= 0)
+            case 3: # [+-b] int(int >= 0)
                 if randint(0,GEN_OPTIONAL_OPT):
                     self.__gen_opt()
                 self.__gen_int()
-            case 3: # x [blank ^ blank [+] int]
+            case 4: # x [blank ^ blank [+] int]
                 print("x", end="") # TODO
                 self.__string += "x"
                 self.__gen_index(max_index)
@@ -224,7 +254,7 @@ class Generator:
 
 
     def __gen_opt(self):
-        # opt -> '+'|'-'
+        # opt -> "+"|"-"
         kind = randint(0,1)
         match kind:
             case 0:
