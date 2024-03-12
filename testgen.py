@@ -27,7 +27,7 @@ while true:
     os.system(execute)
     fout = open("out.txt", "r")
     jar_out = fout.readline();
-    print("jar_out: "+jar_out)
+    print("jar_out: "+jar_out,end="")
     fout.close()
 
     # Split generated into num, defs and expression.
@@ -53,7 +53,7 @@ while true:
     subed = sub(r"(?<=[,=+\-*(^])\s*0+\s*(?=\d)|^\s*0+\s*(?=\d)", "", expression)
     subed = sub(r"\^\s*\+", "**", subed)
     subed = sub(r"\^", "**", subed)
-    print("subed: "+subed,end="")
+    print("subed: "+subed)
 
     # Sympy calculates the answer.
     exec("val=expand(" + subed+")")

@@ -1,3 +1,4 @@
 /in.txt
 /out.txt
-/err.log
+/errs.log
+/*.jar
