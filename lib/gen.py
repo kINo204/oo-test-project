@@ -46,7 +46,7 @@ class Generator:
 
     def __gen_attributes(self):
         self.__string = "" # init __string
-        self.__fun_num = randint(0, 3)
+        self.__fun_num = (0 if gen_func==0 else randint(0, 3))
         self.__para_num = randint(1, 3)
         self.__fun_name = ["f", "g", "h"]
         shuffle(self.__fun_name)
