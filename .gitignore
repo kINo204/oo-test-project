@@ -3,3 +3,4 @@
 /errs.log
 /*.jar
 /.test.py
+/lib/__pycache__
