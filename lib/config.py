@@ -1,10 +1,10 @@
-max_term	= 3
-max_fact	= 3
+max_term	= 1
+max_fact	= 2
 max_blan	= 1
-max_index	= 4 		# 8 by requirement
+max_index	= 3 		# 8 by requirement
 max_numlen	= 2
-max_brac	= 3
-gen_func    = 1			# NOTE: Set the function number to 0, not to control function generation when num != 0!
+max_brac	= 2
+max_func_num= 2
 gen_diff    = 1
 max_diff    = 2         # 2 by requirement
 fun_def_brac	= 1

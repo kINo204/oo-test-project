@@ -39,6 +39,7 @@ for i in range(0,num):
     defs[i] = sub(r"(?<=[,=+\-*(^])\s*0+\s*(?=\d)|^\s*0+\s*(?=\d)", "", defs[i])
     defs[i] = sub(r"\^\s*\+", "**", defs[i])
     defs[i] = sub(r"\^", "**", defs[i])
+    defs[i] = sub(r"dx", "diff", defs[i])
     defs[i] = sub("=", " :return ", defs[i])
     defs[i] = "def " + defs[i];
     exec(defs[i])
@@ -48,6 +49,7 @@ subed = ""
 subed = sub(r"(?<=[,=+\-*(^])\s*0+\s*(?=\d)|^\s*0+\s*(?=\d)", "", expression)
 subed = sub(r"\^\s*\+", "**", subed)
 subed = sub(r"\^", "**", subed)
+subed = sub(r"dx", "diff", subed)
 print("subed: "+subed)
 
 # Sympy calculates the answer.
